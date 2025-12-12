@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "pico/rand.h"
 #include "bsp/board_api.h"
 #include "tusb.h"
 
@@ -101,13 +100,8 @@ static void send_hid_report(uint8_t report_id)
 
   if (report_id == REPORT_ID_MOUSE)
   {
-    uint32_t r32 = get_rand_32();
-
-    int8_t x_delta = r32 & 0xFF; // get 8 bits for x
-    int8_t y_delta = (r32 >> 8) & 0xFF; // get next 8 bits for y
-
     // no button, right + down, no scroll, no pan
-    tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, x_delta, y_delta, 0, 0);
+    tud_hid_mouse_report(REPORT_ID_MOUSE, 0x00, 1, 1, 0, 0);
   }
 }
 
