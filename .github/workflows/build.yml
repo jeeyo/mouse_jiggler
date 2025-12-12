@@ -1,0 +1,63 @@
+name: Build UF2
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout Repo
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install Arm GNU Toolchain
+      uses: carlosperate/arm-none-eabi-gcc-action@v1
+
+    - name: Install CMake
+      uses: jwlawson/actions-setup-cmake@v2
+
+    - name: Install Pico SDK
+      shell: bash
+      run: |
+        git clone https://github.com/raspberrypi/pico-sdk.git
+        cd pico-sdk
+        git submodule update --init
+
+    - name: Build
+      shell: bash
+      env:
+        PICO_SDK_PATH: ${{ github.workspace }}/pico-sdk
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        make
+
+    - name: Upload UF2
+      uses: actions/upload-artifact@v4
+      with:
+        name: mouse_jiggler.uf2
+        path: build/mouse_jiggler.uf2
+
+    - name: Get Date
+      id: date
+      if: github.ref == 'refs/heads/main'
+      run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      if: github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.date.outputs.date }}
+        name: ${{ steps.date.outputs.date }}
+        files: build/mouse_jiggler.uf2
+        draft: false
+        prerelease: false
